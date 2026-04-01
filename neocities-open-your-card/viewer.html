@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Snoopy E-Card</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .viewer-shell {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card-container {
+      perspective: 1200px;
+      cursor: pointer;
+    }
+
+    .card-container.rectangle { width: min(92vw, 620px); height: min(66vw, 390px); }
+    .card-container.square { width: min(90vw, 480px); height: min(90vw, 480px); }
+    .card-container.tall { width: min(80vw, 390px); height: min(110vw, 620px); }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.9s ease;
+    }
+
+    .card-container.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      backface-visibility: hidden;
+      background: #fff;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      text-align: center;
+      gap: 0.75rem;
+      justify-content: flex-start;
+      padding-top: 1.2rem;
+    }
+
+    #viewImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    #viewMessage {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #111827;
+      white-space: pre-wrap;
+      width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .thank-you {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #1f2937;
+      font-weight: 700;
+    }
+
+    #player {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #475569;
+      font-style: italic;
+    }
+
+    .error {
+      text-align: center;
+      background: #fff;
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="viewer-shell">
+    <div class="card-container rectangle" id="cardWrapper">
+      <div class="card-inner">
+        <section class="card-face card-front">
+          <img id="viewImage" alt="Card image">
+          <p class="hint">Click card to flip and start music.</p>
+        </section>
+        <section class="card-face card-back">
+          <p id="viewMessage"></p>
+          <p class="thank-you">thank you for working with snoopys-ecards! 🐾❤️</p>
+          <div id="player" aria-hidden="true"></div>
+          <p class="hint">Click again to return to the photo.</p>
+        </section>
+      </div>
+    </div>
+    <p class="error hidden" id="errorText">Card not found. Please check the shared link.</p>
+  </main>
+
+  <script>
+    const wrapper = document.getElementById("cardWrapper");
+    const image = document.getElementById("viewImage");
+    const message = document.getElementById("viewMessage");
+    const player = document.getElementById("player");
+    const errorText = document.getElementById("errorText");
+
+    function getCardIdFromHash() {
+      const raw = window.location.hash.slice(1);
+      if (!raw) return "";
+      const params = new URLSearchParams(raw);
+      return params.get("id") || raw;
+    }
+
+    function getYouTubeID(input) {
+      if (!input) return "";
+      try {
+        const url = new URL(input);
+        if (url.hostname.includes("youtu.be")) return url.pathname.replace("/", "");
+        if (url.searchParams.get("v")) return url.searchParams.get("v");
+        const parts = url.pathname.split("/").filter(Boolean);
+        const embedIndex = parts.indexOf("embed");
+        if (embedIndex !== -1 && parts[embedIndex + 1]) return parts[embedIndex + 1];
+      } catch {}
+      return "";
+    }
+
+    function getTheme(theme) {
+      const map = {
+        blue: "linear-gradient(120deg, #a0d8f1, #dbeafe)",
+        pink: "linear-gradient(120deg, #fbcfe8, #fdf2f8)",
+        green: "linear-gradient(120deg, #bbf7d0, #ecfccb)",
+        yellow: "linear-gradient(120deg, #fef08a, #fef9c3)",
+        sunset: "linear-gradient(120deg, #fdba74, #fde68a)"
+      };
+      return map[theme] || "linear-gradient(120deg, #a0d8f1, #f9f4e3)";
+    }
+
+    const id = getCardIdFromHash();
+    const rawData = id ? localStorage.getItem("card_" + id) : null;
+
+    if (!rawData) {
+      wrapper.classList.add("hidden");
+      errorText.classList.remove("hidden");
+    } else {
+      const data = JSON.parse(rawData);
+
+      document.body.style.background = getTheme(data.colorTheme);
+      image.src = data.image;
+      image.style.objectFit = "contain";
+      message.textContent = data.message || "(No message added)";
+
+      wrapper.classList.remove("rectangle", "square", "tall");
+      wrapper.classList.add(data.cardShape || "rectangle");
+
+      const videoId = getYouTubeID(data.musicURL);
+      let musicStarted = false;
+      let stopTimer = null;
+
+      wrapper.addEventListener("click", () => {
+        wrapper.classList.toggle("flipped");
+
+        if (videoId && !musicStarted) {
+          const start = Number(data.musicStart || 0);
+          const safeStart = Number.isFinite(start) && start >= 0 ? start : 0;
+          const src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&start=" + safeStart + "&controls=0&rel=0";
+
+          player.innerHTML = '<iframe width="100%" height="100%" src="' + src + '" title="YouTube player" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+          musicStarted = true;
+
+          stopTimer = setTimeout(() => {
+            player.innerHTML = "";
+          }, 60000);
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        if (stopTimer) clearTimeout(stopTimer);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snoopy Flip E-Card Builder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="container">
+    <h1 class="title">Snoopy Flip E-Card</h1>
+    <p class="subtitle">send a personalized card with music &amp; love</p>
+
+    <div class="steps" aria-label="Progress">
+      <div class="step active" id="dot-1">1</div>
+      <div class="step" id="dot-2">2</div>
+      <div class="step" id="dot-3">3</div>
+      <div class="step" id="dot-4">4</div>
+    </div>
+
+    <section class="card-box" id="step-1">
+      <h2 class="step-title">I. Upload Photo</h2>
+      <label class="upload-box" for="imageInput">
+        <span class="upload-icon">📷</span>
+        <span class="upload-label">Choose your photo</span>
+        <span class="file-name" id="fileName">No image selected yet.</span>
+        <input type="file" id="imageInput" accept="image/*">
+      </label>
+      <button class="next-btn" onclick="goNext(1)">Next: Add Message →</button>
+    </section>
+
+    <section class="card-box hidden" id="step-2">
+      <h2 class="step-title">II. Message</h2>
+      <label class="input-label" for="cardMessage">T. Type Your Message.</label>
+      <textarea id="cardMessage" class="message-input" placeholder="Write your message here..."></textarea>
+      <div class="btn-group">
+        <button class="next-btn back" onclick="goBack(2)">Back</button>
+        <button class="next-btn" onclick="goNext(2)">Next: Add Music →</button>
+      </div>
+    </section>
+
+    <section class="card-box hidden" id="step-3">
+      <h2 class="step-title">III. Music</h2>
+      <label class="input-label" for="musicURL">YouTube Link</label>
+      <input class="music-input" id="musicURL" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      <label class="input-label" for="musicStart">Start Time (seconds)</label>
+      <input class="music-input" id="musicStart" type="number" min="0" value="0">
+      <div class="btn-group">
+        <button class="next-btn back" onclick="goBack(3)">Back</button>
+        <button class="next-btn" onclick="goNext(3)">Next: Style →</button>
+      </div>
+    </section>
+
+    <section class="card-box hidden" id="step-4">
+      <h2 class="step-title">IV. Pick Your Style</h2>
+
+      <div class="mini-preview">
+        <img id="step4Image" alt="Selected image preview">
+        <p id="miniPreviewPlaceholder">Your photo preview will appear here.</p>
+      </div>
+
+      <div class="option-section">
+        <p class="option-heading">Choose a Color</p>
+        <div class="bubble-row">
+          <label class="bubble blue"><input type="radio" name="colorTheme" value="blue" checked><span></span></label>
+          <label class="bubble pink"><input type="radio" name="colorTheme" value="pink"><span></span></label>
+          <label class="bubble green"><input type="radio" name="colorTheme" value="green"><span></span></label>
+          <label class="bubble yellow"><input type="radio" name="colorTheme" value="yellow"><span></span></label>
+          <label class="bubble sunset"><input type="radio" name="colorTheme" value="sunset"><span></span></label>
+        </div>
+      </div>
+
+      <div class="option-section">
+        <p class="option-heading">Choose a Shape</p>
+        <div class="shape-row">
+          <button class="shape-btn active" data-shape="rectangle" type="button">Rectangle</button>
+          <button class="shape-btn" data-shape="square" type="button">Square</button>
+          <button class="shape-btn" data-shape="tall" type="button">Tall</button>
+        </div>
+        <input type="hidden" id="cardShape" value="rectangle">
+      </div>
+
+      <div class="btn-group">
+        <button class="next-btn back" onclick="goBack(4)">Back</button>
+        <button class="next-btn" onclick="createCard()">Create Card →</button>
+      </div>
+    </section>
+
+    <section class="card-box hidden" id="share-section">
+      <h2 class="step-title">Your Link Is Ready</h2>
+      <label class="input-label" for="shareLink">Share this link:</label>
+      <input class="music-input" id="shareLink" readonly>
+
+      <div class="share-friends-box">
+        <p class="share-friends-title">share to friends🩵</p>
+        <button class="next-btn" id="shareFriendsBtn" onclick="shareToFriends()">Share to friends🩵</button>
+      </div>
+
+      <div class="btn-group">
+        <button class="next-btn back" onclick="copyLink()">Copy Link</button>
+        <button class="next-btn" onclick="viewCard()">Open Viewer</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
